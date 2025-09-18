@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actividades</title>
+</head>
+<body>
+  <div class="app">
+    <main class="app-main">
+      <div class="activity-card">
+        <p class="activity" id="activity">Pulsa un botón</p>
+      </div>
+      <div class="filters">
+        <select id="type">
+          <option value="">Cualquier tipo</option>
+          <option value="education">Educación</option>
+          <option value="recreational">Recreativo</option>
+          <option value="social">Social</option>
+          <option value="diy">DIY</option>
+          <option value="charity">Caridad</option>
+          <option value="cooking">Cocinar</option>
+          <option value="relaxation">Relajación</option>
+          <option value="music">Música</option>
+          <option value="busywork">Trabajo</option>
+        </select>
+      </div>
+      <div class="buttons">
+        <button id="randomBtn">🎲 Aleatorio</button>
+        <button id="searchBtn">🔎 Buscar por tipo</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 🔹 Estilos tipo app sin header
+    const style = document.createElement('style');
+    style.textContent = `
+      :root {
+        --gradient: linear-gradient(135deg,#667eea,#764ba2);
+      }
+      *{box-sizing:border-box;}
+      body {
+        margin:0;
+        font-family:'Poppins', sans-serif;
+        background:var(--gradient);
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        min-height:100vh;
+        color:#fff;
+      }
+      .app { width:100%; max-width:420px; }
+      .app-main {
+        padding:1rem;
+        display:flex;
+        flex-direction:column;
+        gap:1rem;
+      }
+      .activity-card {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border-radius:1rem;
+        padding:1.5rem;
+        box-shadow:0 10px 25px rgba(0,0,0,0.2);
+        text-align:center;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        min-height:100px;
+        animation:fadeIn .4s ease;
+        backdrop-filter: blur(10px);
+      }
+      .activity { font-size:1.3rem; margin:0; font-weight:500; }
+      .filters select {
+        width:100%;
+        padding:.8rem;
+        border:none;
+        border-radius:.75rem;
+        font-size:1rem;
+        box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      }
+      .buttons {
+        display:flex;
+        flex-direction:column;
+        gap:.75rem;
+      }
+      button {
+        padding:.95rem;
+        font-size:1.1rem;
+        font-weight:600;
+        border:none;
+        border-radius:.75rem;
+        cursor:pointer;
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color: #fff;
+        transition: background .2s ease, transform .1s ease;
+      }
+      button:hover {
+        background: linear-gradient(135deg,#764ba2,#667eea);
+      }
+      button:active { transform:scale(0.98); }
+      @media(min-width:600px){ .buttons{flex-direction:row;} }
+      @keyframes fadeIn { from {opacity:0;transform:translateY(10px);} to {opacity:1;transform:translateY(0);} }
+    `;
+    document.head.appendChild(style);
+
+    // 🔹 Lógica API
+    const activityEl = document.getElementById('activity');
+    const typeEl = document.getElementById('type');
+
+    document.getElementById('randomBtn').addEventListener('click', fetchRandom);
+    document.getElementById('searchBtn').addEventListener('click', fetchByType);
+
+    let loadingInterval;
+
+    function startLoading() {
+      let dots = 0;
+      activityEl.textContent = 'Cargando';
+      loadingInterval = setInterval(() => {
+        activityEl.textContent = 'Cargando' + '.'.repeat(dots % 4);
+        dots++;
+      }, 300);
+    }
+
+    function stopLoading() {
+      clearInterval(loadingInterval);
+    }
+
+    async function fetchRandom() {
+      startLoading();
+      try {
+        const res = await fetch('https://apis.scrimba.com/bored/api/activity/');
+        if (!res.ok) throw new Error('Error en la respuesta');
+        const data = await res.json();
+        stopLoading();
+        activityEl.textContent = data.activity;
+      } catch (e) {
+        stopLoading();
+        activityEl.textContent = 'Error al obtener actividad.';
+        console.error(e);
+      }
+    }
+
+    async function fetchByType() {
+      const type = typeEl.value;
+      if (!type) {
+        activityEl.textContent = 'Elige un tipo.';
+        return;
+      }
+      startLoading();
+      try {
+        const params = new URLSearchParams({ type });
+        const res = await fetch(`https://apis.scrimba.com/bored/api/activity?${params.toString()}`);
+        if (!res.ok) throw new Error('Error en la respuesta');
+        const data = await res.json();
+        stopLoading();
+        if (data && data.activity) {
+          activityEl.textContent = data.activity;
+        } else {
+          activityEl.textContent = 'No hay actividades de ese tipo.';
+        }
+      } catch (e) {
+        stopLoading();
+        activityEl.textContent = 'Error al obtener actividad.';
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
